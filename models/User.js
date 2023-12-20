@@ -1,6 +1,7 @@
 // imported the Model class and DataTypes object from Sequelize
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/connection');
+const bcrypt = require('bcrypt');
 
 // create our User Model - Model class is what we create our own models from using the extends keyword so User inherits all of the functionality the Model class has
 class User extends Model {}
@@ -50,8 +51,21 @@ User.init(
             }
         }
     },
-
     {
+      // We'll be working in the User.js file, so we can modify the User model and add the appropriate hooks at opportune moments to hash the password.
+      hooks: {
+        // set up beforeCreate lifecycle "hook" functionality - The async keyword is used as a prefix to the function that contains the asynchronous function. - hash user new account passwords
+          async beforeCreate(newUserData) {
+            // await can be used to prefix the async function, which will then gracefully assign the value from the response to the newUserData's password property. The newUserData is then returned to the application with the hashed password.
+            newUserData.password = await bcrypt.hash(newUserData.password, 10);
+            return newUserData;
+          },
+          // set up beforeupdate lifecycle "hook" functionality - hash updated user passwords
+          async beforeUpdate(updatedUserData) {
+            updatedUserData.password = await bcrypt.hash(updatedUserData.password, 10);
+            return updatedUserData;
+          }
+      },
         // TABLE CONFIGURATION OPTIONS GO HERE ((https://sequelize.org/v5/manual/models-definition.html#configuration)) - use the .init() method to initialize the model's data and configuration, passing in two objects as arguments. The first object will define the columns and data types for those columns. The second object it accepts configures certain options for the table.
 
         // pass in our imported sequelize connection (the direct connection to our database)
