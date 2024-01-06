@@ -22,7 +22,7 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
     // we're actually passing an argument into the .findOne() method, another great benefit of using Sequelize. Instead of writing a hefty SQL query, we can use JavaScript objects to help configure the query!
     User.findOne({
-        attributes: { exclude: ['password'] },
+        attributes: {  exclude: ['password'] },
         // using the where option to indicate we want to find a user where its id value equals whatever req.params.id is, much like the following SQL query: (SELECT * FROM users WHERE id = 1)
         where: {
             id: req.params.id
@@ -57,6 +57,36 @@ router.post('/', (req, res) => {
     });
 });
 
+// verify the user's identity using the user's email address and password
+router.post('/login', (req, res) => {
+    // expects {email: 'lernantino@gmail.com', password: 'password1234'} - We queried the User table using the findOne() method for the email entered by the user and assigned it to req.body.email.
+    User.findOne({
+        where: {
+            email: req.body.email
+        }
+    }).then(dbUserData => {
+        // If the user with that email was not found, a message is sent back as a response to the client
+        if (!dbUserData) {
+            res.status(400).json({ message: 'No user with that email address!' });
+        return;                                                                                                                                                                                                                                                                                                                 
+        }
+        //However, if the email was found in the database, the next step will be to verify the user's identity by matching the password from the user and the hashed password in the database. This will be done in the Promise of the query.
+       //res.json({ user: dbUserData });
+
+        //Verify user
+        const validPassword = dbUserData.checkPassword(req.body.password);
+
+        // Note that the instance method was called on the user retrieved from the database, dbUserData. Because the instance method returns a Boolean, we can use it in a conditional statement to verify whether the user has been verified or no.
+        if (!validPassword) {
+            //if the match returns a false value, an error message is sent back to the client, and the return statement exits out of the function immediately.
+            res.status(400).json({ message: 'Incorrect password!'});
+            return;
+        }
+        //  if there is a match, the conditional statement block is ignored, and a response with the data and the message "You are now logged in." is sent instead.
+        res.json({ user: dbUserData, message: 'You are now logged in!' });
+    });
+});
+ 
 // PUT /api/users/1 - To update existing data, use both req.body and req.params
 router.put('/:id', (req, res) => {
       // expects {username: 'Jayden', email: 'jayden@gmail.com', password: 'password1234'}

@@ -4,7 +4,13 @@ const sequelize = require('../config/connection');
 const bcrypt = require('bcrypt');
 
 // create our User Model - Model class is what we create our own models from using the extends keyword so User inherits all of the functionality the Model class has
-class User extends Model {}
+class User extends Model {
+  //set up method to run on instance daata (per user) to check passwor
+  checkPassword(loginPw) {
+    // Using the keyword this, we can access this user's properties, including the password, which was stored as a hashed string.
+    return bcrypt.compareSync(loginPw, this.password);
+  }
+}
 
 // define table columns and configuration -  
 User.init(
