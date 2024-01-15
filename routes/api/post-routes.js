@@ -1,13 +1,21 @@
 //packages and models that we'll need to create the Express.js API endpoints
 const router = require('express').Router();
-const { Post, User } = require('../../models'); //Why did we include the User model for the post-routes? In a query to the post table, we would like to retrieve not only information about each post, but also the user that posted it. With the foreign key, user_id, we can form a JOIN, an essential characteristic of the relational data model.
+const sequelize = require('../../config/connection');
+const { Post, User, Vote } = require('../../models'); //Why did we include the User model for the post-routes? In a query to the post table, we would like to retrieve not only information about each post, but also the user that posted it. With the foreign key, user_id, we can form a JOIN, an essential characteristic of the relational data model.
 
 //get all users /api/posts
 router.get('/', (req, res) => {
     console.log('================================')
     Post.findAll({
         //Query configuration
-        attributes: ['id', 'post_url', 'title', 'created_at'], //  configure the findAll method by customizing the attributes property (account for the other columns that we'll retrieve in this query).
+        attributes: [
+         'id',
+         'post_url',
+         'title',
+         'created_at',
+         [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count'] //include the total vote count for a post
+
+    ], //  configure the findAll method by customizing the attributes property (account for the other columns that we'll retrieve in this query).
         order: [[ 'created_at', 'DESC']], //Notice that the order property is assigned a nested array that orders by the created_at column in descending order. This will ensure that the latest posted articles will appear first.
         include: [//we'll include the JOIN to the User table. We do this by adding the property include (include property is expressed as an array of objects. To define this object, we need a reference to the model and attributes)
             {
@@ -26,28 +34,36 @@ router.get('/', (req, res) => {
 // Get a single post /api/ post/ :id
 router.get('/:id', (req, res) => {
     Post.findOne({
-        where: { //used the where property to set the value of the id using req.params.id
-            id: req.params.id // use of the req.params to retrieve the id property from the route
-        }, 
-        attributes: ['id', 'post_url', 'title', 'created_at'], // requesting the same attributes, including the username which requires a reference to the User model using the include property.
-        include: [ //We were also able to retrieve the username in the user table by using the include property.
-            {
-                model: User,
-                attributes: ['username'] 
-            }
-        ]
+      where: {
+        id: req.params.id
+      },
+      attributes: [
+        'id',
+        'post_url',
+        'title',
+        'created_at',
+        [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
+      ],
+      include: [
+        {
+          model: User,
+          attributes: ['username']
+        }
+      ]
     })
-    .then(dbPostData => {
+      .then(dbPostData => {
         if (!dbPostData) {
-            res.status(404).json({ message: "No post found with this id" });
+          res.status(404).json({ message: 'No post found with this id' });
+          return;
         }
         res.json(dbPostData);
-    })
-    .catch(err => { 
+      })
+      .catch(err => {
         console.log(err);
         res.status(500).json(err);
-    });
-});
+      });
+  });
+
 
 //Create a post
 router.post('/', (req, res) => {
@@ -63,6 +79,18 @@ router.post('/', (req, res) => {
         res.status(500).json(err);
     });
 });
+
+// PUT /api/posts/upvote - Make sure this PUT route is defined before the /:id PUT route, though. Otherwise, Express.js will think the word "upvote" is a valid parameter for /:id.
+router.put('/upvote', (req, res) => {
+    //// custom static method created in models/Post.js
+    Post.upvote (req.body, { Vote })
+    .then(updatedPostData => res.json(updatedPostData))
+    .catch(err => {
+      console.log(err);
+      res.status(400).json(err);
+    });
+});
+       
 
 //Update a posts title -In the response, we sent back data that has been modified and stored in the database
 router.put('/:id', (req, res) => {

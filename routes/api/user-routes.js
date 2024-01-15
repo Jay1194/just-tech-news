@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { User } = require('../../models');
+const { User, Post, Vote } = require('../../models');
 
 //  create five routes that will work with the User model to perform CRUD operations.
 
@@ -26,7 +26,19 @@ router.get('/:id', (req, res) => {
         // using the where option to indicate we want to find a user where its id value equals whatever req.params.id is, much like the following SQL query: (SELECT * FROM users WHERE id = 1)
         where: {
             id: req.params.id
-        }
+        },
+        include: [ //So now when we query a single user, we'll receive the title information of every post they've ever voted on
+            {
+              model: Post,
+              attributes: ['id', 'title', 'post_url', 'created_at']
+            },
+            {
+              model: Post,
+              attributes: ['title'],
+              through: Vote,
+              as: 'voted_posts'
+            }
+          ]
     })
     //there's the possibility that we could accidentally search for a user with a nonexistent id value. Therefore, if the .then() method returns nothing from the query, we send a 404 status back to the client to indicate everything's okay and they just asked for the wrong piece of data.
     .then(dbUserData => {
