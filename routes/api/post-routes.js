@@ -1,12 +1,13 @@
 //packages and models that we'll need to create the Express.js API endpoints
 const router = require('express').Router();
 const sequelize = require('../../config/connection');
-const { Post, User, Vote } = require('../../models'); //Why did we include the User model for the post-routes? In a query to the post table, we would like to retrieve not only information about each post, but also the user that posted it. With the foreign key, user_id, we can form a JOIN, an essential characteristic of the relational data model.
+const { Post, User, Vote, Comment } = require('../../models'); //Why did we include the User model for the post-routes? In a query to the post table, we would like to retrieve not only information about each post, but also the user that posted it. With the foreign key, user_id, we can form a JOIN, an essential characteristic of the relational data model.
 
 //get all users /api/posts
 router.get('/', (req, res) => {
     console.log('================================')
     Post.findAll({
+         order: [[ 'created_at', 'DESC']], //Notice that the order property is assigned a nested array that orders by the created_at column in descending order. This will ensure that the latest posted articles will appear first.
         //Query configuration
         attributes: [
          'id',
@@ -16,11 +17,18 @@ router.get('/', (req, res) => {
          [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count'] //include the total vote count for a post
 
     ], //  configure the findAll method by customizing the attributes property (account for the other columns that we'll retrieve in this query).
-        order: [[ 'created_at', 'DESC']], //Notice that the order property is assigned a nested array that orders by the created_at column in descending order. This will ensure that the latest posted articles will appear first.
         include: [//we'll include the JOIN to the User table. We do this by adding the property include (include property is expressed as an array of objects. To define this object, we need a reference to the model and attributes)
             {
                 model: User,
-                attributes: ['username'] //  username attribute was nested in the user object, which designates the table where this attribute is coming from
+                attributes: ['username']  //  username attribute was nested in the user object, which designates the table where this attribute is coming from
+            },
+            {
+                model: Comment,
+                attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+                include: {
+                    model: User,
+                    attributes:['username']
+                }
             }
         ]
     })
@@ -48,6 +56,14 @@ router.get('/:id', (req, res) => {
         {
           model: User,
           attributes: ['username']
+        },
+        {
+            model: Comment,
+            attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+            include: {
+                model: User,
+                attributes:['username']
+            }
         }
       ]
     })
