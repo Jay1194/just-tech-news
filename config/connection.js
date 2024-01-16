@@ -1,15 +1,12 @@
-// import the sequelize constructor from the library
-const Sequelize = require('sequelize');
+let sequelize;
 
-// don't have to save the require('dotenv') to a variable? All we need it to do here is execute when we use connection.js and all of the data in the .env file will be made available at process.env.<ENVIRONMENT-VARIABLE-NAME>.
-require('dotenv').config();
+if (process.env.JAWSDB_URL) {
+  sequelize = new sequelize(process.env.JAWSDB_URL);
 
-// create connection to our database, pass in your MYSQL information for username and password - new Sequelize() function accepts the database name, MySQL username, and MySQL password (respectively) as parameters,
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+} else {
+sequelize = new sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, { //When the app is deployed, it will have access to Heroku's process.env.JAWSDB_URL variable and use that value to connect. Otherwise, it will continue using the localhost configuration.
   host: 'localhost',
   dialect: 'mysql',
-  port: 3306  
+  port: 3306
 });
-
-// export the connection
-module.exports = sequelize;
+}
