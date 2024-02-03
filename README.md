@@ -1,6 +1,6 @@
 # Just-Tech-News
 
-A simple web application for taking and managing notes.
+Sequelize: A Node.js ORM simplifying SQL database interactions with JavaScript.
 
 ## Table of Contents
 
