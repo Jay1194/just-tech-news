@@ -39,7 +39,7 @@ router.get('/:id', (req, res) => {
                     model: Post,
                     attributes:['title']
                 }
-            },
+            }, 
             {
               model: Post,
               attributes: ['title'],
