@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { User, Post, Vote, Comment } = require("../../models");
+const withAuth = require("../../utils/auth");
 
 //  create five routes that will work with the User model to perform CRUD operations.
 
@@ -151,7 +152,7 @@ router.put("/:id", (req, res) => {
 });
 
 // DELETE / api/users/1 - to delete a user from the database
-router.delete("/:id", (req, res) => {
+router.delete("/:id", withAuth, (req, res) => {
   // To delete data, use the .destroy() method and provide some type of identifier to indicate where exactly we would like to delete data from the user database table.
   User.destroy({
     where: {

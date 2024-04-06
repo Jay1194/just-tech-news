@@ -2,6 +2,7 @@
 const router = require("express").Router();
 const sequelize = require("../../config/connection");
 const { Post, User, Vote, Comment } = require("../../models"); //Why did we include the User model for the post-routes? In a query to the post table, we would like to retrieve not only information about each post, but also the user that posted it. With the foreign key, user_id, we can form a JOIN, an essential characteristic of the relational data model.
+const withAuth = require("../../utils/auth");
 
 //get all users /api/posts
 router.get("/", (req, res) => {
@@ -91,12 +92,12 @@ router.get("/:id", (req, res) => {
 });
 
 //Create a post
-router.post("/", (req, res) => {
+router.post("/", withAuth, (req, res) => {
   //expects {title: 'Taskmaster goes public!', post_url: 'https://taskmaster.com/press', user_id: 1}}
   Post.create({
     title: req.body.title,
     post_url: req.body.post_url,
-    user_id: req.body.user_id,
+    user_id: req.session.user_id,
   })
     .then((dbPostData) => res.json(dbPostData))
     .catch((err) => {
@@ -106,7 +107,7 @@ router.post("/", (req, res) => {
 });
 
 // PUT /api/posts/upvote - Make sure this PUT route is defined before the /:id PUT route, though. Otherwise, Express.js will think the word "upvote" is a valid parameter for /:id.
-router.put("/upvote", (req, res) => {
+router.put("/upvote", withAuth, (req, res) => {
   // custom static method created in models/Post.js
   if (req.session) {
     Post.upvote(
@@ -122,7 +123,7 @@ router.put("/upvote", (req, res) => {
 });
 
 //Update a posts title -In the response, we sent back data that has been modified and stored in the database
-router.put("/:id", (req, res) => {
+router.put("/:id", withAuth, (req, res) => {
   Post.update(
     {
       title: req.body.title, //the req.body.title value to replace the title of the post
@@ -147,7 +148,7 @@ router.put("/:id", (req, res) => {
 });
 
 // Delete a post - We will use Sequelize's destroy method and using the unique id in the query parameter to find then delete this instance of the post
-router.delete("/:id", (req, res) => {
+router.delete("/:id", withAuth, (req, res) => {
   Post.destroy({
     where: {
       id: req.params.id,
