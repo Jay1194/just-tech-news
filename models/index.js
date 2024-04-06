@@ -1,4 +1,4 @@
-// All this file is responsible for right now is importing the User model and exporting an object with it as a property - will serve as a means to collect all of the API routes and package them up for us.
+ // All this file is responsible for right now is importing the User model and exporting an object with it as a property - will serve as a means to collect all of the API routes and package them up for us.
 const User = require('./User');
 //we can use the Post model, we need to require it in models/index.js and export it 
 const Post = require('./Post');
@@ -46,8 +46,8 @@ Vote.belongsTo(User, {
 // voted on, we can see that too. This makes the data more robust and gives us more capabilities for visualizing this data on the client-side. - many to many relationship
 User.belongsToMany(Post, {
     through: Vote,
-as: 'voted_posts',
-foreignKey: 'user_id' // We state what we want the foreign key to be in Vote
+    as: 'voted_posts',
+    foreignKey: 'user_id' // We state what we want the foreign key to be in Vote
 });
 
 //We instruct the application that the User and Post models will be connected through the Vote model
